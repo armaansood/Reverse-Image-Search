@@ -1,0 +1,10 @@
+[package]
+name = "sagasu"
+version = "0.1.0"
+authors = ["Luminarys <8228526+Luminarys@users.noreply.github.com>"]
+
+[dependencies]
+image = "0.20"
+glob = "0.2"
+pbr = "1.0"
+tiny_http = "0.6"
