@@ -171,12 +171,18 @@ impl Index {
         }
     }
 
-    fn get_sig(data: &[u8]) -> Box<Signature> {
+    fn get_sig(data: &[u8], blur: bool) -> Box<Signature> {
         // Vec<u8>, format c1,c2,c3
         let input = image::load_from_memory(data).unwrap().to_rgb();
 
         // Convert to grayscale
         // let input: image::ImageBuffer<image::Rgb<u8>, Vec<u8>> = imageops::grayscale(&input).convert();
+        let input = if blur {
+            // input
+            imageops::blur(&input, 2.0)
+        } else {
+            input
+        };
         let mut pixels = imageops::resize(&input, NUM_PIXELS as u32, NUM_PIXELS as u32, image::FilterType::Gaussian)
             .into_raw();
         let mut img = Image::new();
@@ -196,7 +202,7 @@ impl Index {
     pub fn update(&mut self, path: &str) {
         let idx = self.paths.len();
         let buf = fs::read(path).unwrap();
-        let sig = Index::get_sig(&buf);
+        let sig = Index::get_sig(&buf, false);
         self.paths.push(path.to_owned());
         self.avg.push([sig.avg[0], sig.avg[1], sig.avg[2]]);
         for c in 0..CHANNELS {
@@ -217,7 +223,7 @@ impl Index {
 
     pub fn query_buf(&self, data: &[u8]) -> Vec<(&str, f32)> {
         let mut scores = vec![(0, 0.0f32); self.paths.len()];
-        let sig = Index::get_sig(data);
+        let sig = Index::get_sig(data, true);
         for (i, avg) in self.avg.iter().enumerate() {
             let mut s = 0.0;
             for c in 0..CHANNELS {

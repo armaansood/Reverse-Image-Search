@@ -2,13 +2,15 @@ extern crate image;
 extern crate glob;
 extern crate pbr;
 extern crate tiny_http;
+extern crate rand;
 
 mod db;
 
 use db::Index;
 use std::io;
+use rand::Rng;
 
-const COUNT: u64 = 500;
+const COUNT: u64 = 10000;
 
 fn main() -> io::Result<()> {
     let mut index = Index::new();
@@ -28,12 +30,29 @@ fn main() -> io::Result<()> {
     index.update("data/mona.jpg");
     index.update("data/flower.jpg");
     index.update("data/flower2.jpg");
-    index.update("data/face.jpg");
-    index.update("data/face4.jpg");
+    index.update("data/face2.jpg");
+    index.update("data/face3.jpg");
 
     println!("{:?}", index.query("data/mona-noise.jpg"));
-    println!("{:?}", index.query("data/flower3.jpg"));
     println!("{:?}", index.query("data/acc-noise.jpg"));
+    rand::thread_rng().shuffle(&mut imgs);
+    let mut scores = 0.0;
+    for img in imgs.iter().take(100) {
+        let path = img.as_path().to_str().unwrap();
+        let res = index.query(path);
+        let mut score = 1.0;
+        for (p, _) in res {
+            if p == path {
+                break;
+            }
+            score /= 2.0;
+        }
+        if score != 1.0 {
+            println!("incorrect: {}, {}", path, score);
+        }
+        scores += score;
+    }
+    println!("Avg Score: {}", scores/100.0);
 
     let server = tiny_http::Server::http("0.0.0.0:1080").unwrap();
     loop {
